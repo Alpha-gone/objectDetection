@@ -5,26 +5,44 @@ import sys
 import time
 
 if __name__ == '__main__':
-    api_server_url = sys.argv[0]
+    cam_ip = sys.argv[1]
+    api_server_url = sys.argv[2]
 
-colab_url='http://192b-34-142-140-175.ngrok-free.app'
+cam_path= 'http://192.168.1.' + cam_ip + ':81/stream'
+url = api_server_url.strip() + '/detect'
 
-video_path= 'http://192.168.1.76:81/stream'
-url = colab_url.strip() + '/detect'
-cap = cv2.VideoCapture(video_path)
+cap = cv2.VideoCapture(cam_path)
 
-while True:
+def detecting():
+  while True:
     _, frame = cap.read()
     frame = cv2.flip(cv2.flip(frame, 0),1)
 
     if not _:
-        break
+        raise Exception('CAPTURE ERR')
 
     ret, buf = cv2.imencode('.jpg', frame)
 
     res = requests.post(url, files={'frame': buf})
-    print(res.content)
+    
+    if pars_result(res.content):
+      termux.Notification.notify("DETECT", time.strftime('%Y-%m-%d %H:%M:%S'))
+    
+    
+    time.sleep(3)
 
-    time.sleep(1)
+    
 
-    termux.Notification.notify("Hello", "World")
+def pars_result(res):
+  return res == 'TRUE'
+
+try:
+  detecting()
+  
+except BaseException as e:
+  termux.Notification.notify("ERROR", str(e))
+  
+  print("RETRY")
+  
+  detecting()
+    
